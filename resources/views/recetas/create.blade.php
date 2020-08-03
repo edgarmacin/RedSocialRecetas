@@ -14,7 +14,7 @@
 
     <div class="row justify-content-center mt-5">
         <div class="col-md-8">
-            <form method="POST" action="{{ route('recetas.store') }}" novalidate>
+            <form method="POST" action="{{ route('recetas.store') }}" enctype="multipart/form-data" novalidate>
 
                 <div class="form-group">
                     @csrf
@@ -42,12 +42,12 @@
                         id="categoria"
                     >
                         <option value="">Seleccione una categoria</option>
-                        @foreach ($categorias as $id => $categoria)
+                        @foreach ($categorias as$categoria)
                             <option 
-                                value="{{ $id }}" 
-                                {{ old('categoria') == $id ? 'selected' : '' }}
+                                value="{{ $categoria->id }}" 
+                                {{ old('categoria') == $categoria->id ? 'selected' : '' }}
                             >
-                                {{ $categoria }}
+                                {{ $categoria->nombre }}
                             </option>
                         @endforeach
                     </select>
@@ -93,6 +93,23 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="ingredientes">Imagen</label>
+                    <input
+                        id="imagen"
+                        type="file"
+                        class="form-control @error('ingredientes') is-invalid @enderror" 
+                        name="imagen"
+                    >
+
+                    @error('imagen')
+                        <span class="invalid-feedback d-block" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                    @enderror
+
+                </div>
+
+                <div class="form-group">
                     <input type="submit" class="btn btn-primary text-white" value="Agregar Receta">
                 </div>
             </form>
@@ -102,5 +119,5 @@
 @endsection
 
 @section('scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/trix/1.2.3/trix.js" integrity="sha512-EkeUJgnk4loe2w6/w2sDdVmrFAj+znkMvAZN6sje3ffEDkxTXDiPq99JpWASW+FyriFah5HqxrXKmMiZr/2iQA==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/trix/1.2.3/trix.js" integrity="sha512-EkeUJgnk4loe2w6/w2sDdVmrFAj+znkMvAZN6sje3ffEDkxTXDiPq99JpWASW+FyriFah5HqxrXKmMiZr/2iQA==" crossorigin="anonymous"  defer></script>
 @endsection

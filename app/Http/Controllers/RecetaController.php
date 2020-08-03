@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\CategoriaReceta;
 use App\Receta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Intervention\Image\Facades\Image;
 
 class RecetaController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware('auth', ['except' => 'show']);
     }
     /**
      * Display a listing of the resource.
@@ -19,7 +22,10 @@ class RecetaController extends Controller
      */
     public function index()
     {
-        return view('recetas.index');
+        // auth()->user()->recetas->dd();
+        $recetas = Auth::user()->recetas;
+
+        return view('recetas.index')->with('recetas', $recetas);
     }
 
     /**
@@ -30,7 +36,11 @@ class RecetaController extends Controller
     public function create()
     {
         //DB::table('categoria_receta')->get()->pluck('nombre', 'id')->dd();
-        $categorias = DB::table('categoria_receta')->get()->pluck('nombre', 'id');
+        //Obtener las categorias sin modelo
+        //$categorias = DB::table('categoria_recetas')->get()->pluck('nombre', 'id');
+
+        //Obtener con modelo
+        $categorias = CategoriaReceta::all(['id', 'nombre']);
 
         return view('recetas.create')->with('categorias', $categorias);
     }
@@ -43,17 +53,43 @@ class RecetaController extends Controller
      */
     public function store(Request $request)
     {
+        //dd( $request['imagen']->store('upload-recetas', 'public') );
+        // vaidar
         $data = $request->validate([
-            'titulo' => 'required | min:6',
-            'categoria' => 'required',
-            'preparacion' => 'required',
+            'titulo'       => 'required | min:6',
+            'categoria'    => 'required',
+            'preparacion'  => 'required',
             'ingredientes' => 'required',
+            'imagen'       => 'required | image',
         ]);
+        // obtener ruta de la imagen
+        $ruta_imagen = $request['imagen']->store('upload-recetas', 'public');
 
-        DB::table('recetas')->insert([
-            'titulo' => $data['titulo']
-        ]);
+        // resize de la imagen
+        $img = Image::make( public_path("storage/{$ruta_imagen}"))->fit(1000, 550);
+        $img->save();
+
+        // guardar en la bd sin modelo
+        // DB::table('recetas')->insert([
+        //     'titulo'       => $data['titulo'],
+        //     'preparacion'  => $data['preparacion'],
+        //     'ingredientes' => $data['ingredientes'],
+        //     'imagen'       => $ruta_imagen,
+        //     'user_id'      => Auth::user()->id,
+        //     'categoria_id' => $data['categoria'],
+        // ]);
         //dd( $request->all() );
+
+
+        //almacenar en la BD con modelo
+
+        auth()->user()->recetas()->create([
+            'titulo'       => $data['titulo'],
+             'preparacion'  => $data['preparacion'],
+             'ingredientes' => $data['ingredientes'],
+             'imagen'       => $ruta_imagen,
+             'categoria_id' => $data['categoria'],
+        ]);
 
         return redirect()->action('RecetaController@index');
     }
@@ -66,7 +102,7 @@ class RecetaController extends Controller
      */
     public function show(Receta $receta)
     {
-        //
+        return view('recetas.show', compact('receta'));
     }
 
     /**

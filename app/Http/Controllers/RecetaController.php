@@ -53,6 +53,7 @@ class RecetaController extends Controller
      */
     public function store(Request $request)
     {
+        //dd(public_path());
         //dd( $request['imagen']->store('upload-recetas', 'public') );
         // vaidar
         $data = $request->validate([
@@ -113,7 +114,9 @@ class RecetaController extends Controller
      */
     public function edit(Receta $receta)
     {
-        //
+        $categorias = CategoriaReceta::all(['id', 'nombre']);
+
+        return view('recetas.edit', compact('categorias', 'receta'));
     }
 
     /**
@@ -125,7 +128,37 @@ class RecetaController extends Controller
      */
     public function update(Request $request, Receta $receta)
     {
-        //
+        // Revisar el policy (el policy que se crea lo tenemos que ligar al modelo con php artisan make:policy RecetaPolicy -m Receta)
+        $this->authorize('update', $receta);
+
+        $data = $request->validate([
+            'titulo'       => 'required | min:6',
+            'categoria'    => 'required',
+            'preparacion'  => 'required',
+            'ingredientes' => 'required',
+        ]);
+
+        // asignar los valores
+        $receta->titulo = $data['titulo'];
+        $receta->preparacion = $data['preparacion'];
+        $receta->ingredientes = $data['ingredientes'];
+        $receta->categoria_id = $data['categoria'];
+
+        //si el usuario sube nueva img
+        if(request('imagen')) {
+            // obtener ruta de la imagen
+            $ruta_imagen = $request['imagen']->store('upload-recetas', 'public');
+
+            // resize de la imagen
+            $img = Image::make( public_path("storage/{$ruta_imagen}"))->fit(1000, 550);
+            $img->save();
+
+            //asignar al objeto
+            $receta->imagen = $ruta_imagen;
+        }
+        $receta->save();
+
+        return redirect()->action('RecetaController@index');
     }
 
     /**
@@ -136,6 +169,12 @@ class RecetaController extends Controller
      */
     public function destroy(Receta $receta)
     {
-        //
+        // Revisar el policy (el policy que se crea lo tenemos que ligar al modelo con php artisan make:policy RecetaPolicy -m Receta)
+        $this->authorize('delete', $receta);
+
+        //eliminar la receta
+        $receta->delete();
+
+        return redirect()->action('RecetaController@index');
     }
 }

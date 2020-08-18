@@ -1,0 +1,1 @@
+php artisan make:model NombreDelController -mcr : este crea ya el modelo el contralador ya de tipo resource y la migracion
